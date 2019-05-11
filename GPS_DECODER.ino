@@ -1,72 +1,111 @@
-#include <Arduino.h>
 #include <SoftwareSerial.h>
-#include <HardwareSerial.h>
-
-char NMEAbuffer;
-const int sentenceIndex = 128;
-char sentenceBuffer[sentenceIndex];
-int index;
-
-String header;
-String lat;
-String NS;
-String lon;
-String EW;
-String Checksum;
-
 
 SoftwareSerial NMEA(3,4);
+char GPS;
+char GPSbuffer[150];
+byte index;
+String GPGLL = "$GPGLL";
+String GPGGA = "$GPGGA";
 
-void setup(){
-    Serial.begin(9600);
-    NMEA.begin(9600);
+void setup() {
+  // put your setup code here, to run once:
+NMEA.begin(9600);
+Serial.begin(9600);
+
 }
 
-void loop(){
-    while (NMEA.available() > 0)
-    {
-       GPS(sentenceBuffer);
-       NMEAbuffer = NMEA.read();
-       if(NMEAbuffer == '\n')
-       {
-           index = 0;
-        } 
-        else if (NMEAbuffer == '$') 
-        {
-            sentenceBuffer[index] = NMEAbuffer;
-            index++;
-        }
-    }
+void loop() {
+  // put your main code here, to run repeatedly:
+while ((NMEA.available()) > 0){
+  GPS = NMEA.read();
+  //Serial.print(GPS);
+  if (GPS == '\n')
+  {
+    parsing(GPSbuffer);
+    index = 0;
+  }
+  else{
+    GPSbuffer[index] = GPS;
+    index++;
+    GPSbuffer[index] = '\0';
+  }
+}
 }
 
-void GPS(String input){
-    byte ind[19];
-    byte index;
-    
-    index = input.length();
+void parsing(String GPSin){
+  byte ind1;
+  byte ind2;
+  byte ind3;
+  byte ind4;
+  byte ind5;
+  byte ind6;
+  byte ind7;
+  byte ind8;
 
-    if(input.startsWith("$GPGLL"))
-    {
-        for(int i = 0; i < index; i++){
-          ind[i] = input.indexOf(',' , ind[i]+1);
-        }
-    
-    header = input.substring(0, ind[0]);
-    lat = input.substring(ind[0]+1, ind[1]);
-    NS = input.substring(ind[1]+1, ind[2]);
-    lon = input.substring(ind[2]+1, ind[3]);
-    EW = input.substring(ind[3]+1, ind[4]);
-    Checksum = input.substring(ind[4], index);
-    
-    Serial.print(header);
-    Serial.print(lat);
-    Serial.print(NS);
-    Serial.print(lon);
-    Serial.print(EW);
-    Serial.print(Checksum);
-    }
-    
-       
-    
-    }
+  String header;
+  String lat;
+  String NS;
+  String EW;
+  String lon;
+  String UTC;
+  String status;
+  String mode;
+  String Checksum;
+  int Check;
+  int Bittotal;
 
+  if (GPSin.startsWith(GPGLL) == true){
+  
+  ind1 = GPSin.indexOf(',');
+  ind2 = GPSin.indexOf(',', ind1+1);
+  ind3 = GPSin.indexOf(',', ind2+1);  
+  ind4 = GPSin.indexOf(',', ind3+1);
+  ind5 = GPSin.indexOf(',', ind4+1);
+  ind6 = GPSin.indexOf(',', ind5+1);
+  ind7 = GPSin.indexOf(',', ind6+1);
+  ind8 = GPSin.indexOf('*', '\0');
+
+
+  header = GPSin.substring(0,ind1);
+  lat = GPSin.substring(ind1+1, ind2);
+  lat = lat.toFloat();
+  NS = GPSin.substring(ind2+1, ind3); 
+  lon = GPSin.substring(ind3+1, ind4);
+  EW =  GPSin.substring(ind4+1, ind5);
+  UTC = GPSin.substring(ind5+1, ind6);
+  status = GPSin.substring(ind6+1, ind7);
+  mode = GPSin.substring(ind7+1, ind8);
+  Checksum = GPSin.substring(ind8);
+  Check = Checksum.toInt();
+  
+  Serial.print("header: ");
+  Serial.println(header);
+  Serial.print("lat: ");
+  Serial.println(lat);
+  Serial.print("North or South: ");
+  Serial.println(NS);
+  Serial.print("lon: ");
+  Serial.println(lon);
+  Serial.print("East or West: ");
+  Serial.println(EW);
+  Serial.print("UTC time: ");
+  Serial.println(UTC);
+  Serial.print("status (A is valid, V not): ");
+  Serial.println(status);
+  Serial.print("mode: ");
+  Serial.println(mode);
+  Serial.print("checksum: ");
+  Serial.println(Checksum);
+  }
+/*
+if (GPSin.startsWith(GPGGA) == true){
+  ind1 = GPSin.indexOf(',');
+  ind2 = GPSin.indexOf(',', ind1+1);
+  ind3 = GPSin.indexOf(',', ind2+1);  
+  ind4 = GPSin.indexOf(',', ind3+1);
+  header = GPSin.substring(0,ind1);
+
+  Serial.println(header);
+}
+*/
+}
