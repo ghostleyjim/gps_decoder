@@ -6,6 +6,12 @@ char GPSbuffer[150];
 byte index;
 String GPGLL = "$GPGLL";
 String GPGGA = "$GPGGA";
+int Bittotal;
+int Check;
+int hour;
+int minute;
+int seconds;
+float lat;
 
 void setup() {
   // put your setup code here, to run once:
@@ -21,6 +27,15 @@ while ((NMEA.available()) > 0){
   //Serial.print(GPS);
   if (GPS == '\n')
   {
+  
+  /*for (int i = 1; i < strlen(GPSbuffer) - 3; i ++) { // checksum calculation need to make a function for it
+        Bittotal ^= GPSbuffer[i];
+  }
+  
+  Serial.print("calculated: ");
+  Serial.println(Bittotal, HEX);
+  */
+
     parsing(GPSbuffer);
     index = 0;
   }
@@ -43,7 +58,7 @@ void parsing(String GPSin){
   byte ind8;
 
   String header;
-  String lat;
+  String latbuf;
   String NS;
   String EW;
   String lon;
@@ -51,11 +66,14 @@ void parsing(String GPSin){
   String status;
   String mode;
   String Checksum;
-  int Check;
-  int Bittotal;
+  String hourbuf;
+  String minbuf;
+  String secbuf;
 
   if (GPSin.startsWith(GPGLL) == true){
   
+  
+
   ind1 = GPSin.indexOf(',');
   ind2 = GPSin.indexOf(',', ind1+1);
   ind3 = GPSin.indexOf(',', ind2+1);  
@@ -67,17 +85,24 @@ void parsing(String GPSin){
 
 
   header = GPSin.substring(0,ind1);
-  lat = GPSin.substring(ind1+1, ind2);
-  lat = lat.toFloat();
+  latbuf = GPSin.substring(ind1+1, ind2);
+  lat = latbuf.toFloat();
   NS = GPSin.substring(ind2+1, ind3); 
   lon = GPSin.substring(ind3+1, ind4);
   EW =  GPSin.substring(ind4+1, ind5);
   UTC = GPSin.substring(ind5+1, ind6);
+  hourbuf = UTC.substring(0, 2);
+  minbuf = UTC.substring(2, 4);
+  secbuf = UTC.substring(4,6);
   status = GPSin.substring(ind6+1, ind7);
   mode = GPSin.substring(ind7+1, ind8);
   Checksum = GPSin.substring(ind8);
   Check = Checksum.toInt();
   
+  hour = hourbuf.toInt();
+  minute = minbuf.toInt();
+  seconds = secbuf.toInt();
+
   Serial.print("header: ");
   Serial.println(header);
   Serial.print("lat: ");
@@ -96,6 +121,29 @@ void parsing(String GPSin){
   Serial.println(mode);
   Serial.print("checksum: ");
   Serial.println(Checksum);
+  /*
+  Serial.print("hour: ");
+  Serial.println(hour);
+  Serial.print("minutes: ");
+  Serial.println(minute);
+  Serial.print("seconds: ");
+  Serial.println(seconds);
+  */
+  hour = hour +2;
+  Serial.print("time: "); 
+  Serial.print(hour); 
+  Serial.print(":"); 
+  Serial.print(minute); 
+  Serial.print(":"); 
+  if (seconds < 10){
+    Serial.print("0");
+  }
+  Serial.print(seconds);
+  Serial.println();
+  Serial.println();
+  
+
+  
   }
 /*
 if (GPSin.startsWith(GPGGA) == true){
