@@ -1,4 +1,17 @@
 #include <SoftwareSerial.h>
+#include <RF24Network.h>
+#include<RF24.h>
+#include <SPI.h>
+
+RF24 radio(3,4);
+
+RF24Network network(radio);
+const uint16_t this_node = 00;
+const uint16_t other_node = 01;
+
+const unsigned long interval = 2000; //ms  // How often to send 'hello world to the other unit
+
+unsigned long last_sent;             // When did we last send?
 
 SoftwareSerial NMEA(3,4);
 char GPS;
@@ -13,15 +26,45 @@ int minute;
 int seconds;
 float lat;
 
+struct payload_t
+{
+int time_h;
+int time_m;
+int time_s;
+};
+
+
 void setup() {
   // put your setup code here, to run once:
 NMEA.begin(9600);
-Serial.begin(9600);
+Serial.begin(57600);
+
+SPI.begin();
+radio.begin();
+network.begin(90,this_node);
 
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  
+network.update();
+
+unsigned long now = millis();              // If it's time to send a message, send it!
+  if ( now - last_sent >= interval  )
+  {
+    last_sent = now;
+
+    Serial.print("Sending...");
+    payload_t payload = { hour, minute, seconds };
+    RF24NetworkHeader header(/*to node*/ other_node);
+    bool ok = network.write(header,&payload,sizeof(payload));
+    if (ok)
+      Serial.println("ok.");
+    else
+      Serial.println("failed.");
+  }
+}
+
 while ((NMEA.available()) > 0){
   GPS = NMEA.read();
   //Serial.print(GPS);
